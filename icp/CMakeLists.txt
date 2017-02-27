@@ -1,6 +1,6 @@
-cmake_minimum_required(VERSION 2.6 FATAL_ERROR)
+cmake_minimum_required(VERSION 2.8 FATAL_ERROR)
 
-project(pcl_visualizer_viewports)
+project(iterative_closest_point)
 
 find_package(PCL 1.2 REQUIRED)
 
@@ -10,3 +10,6 @@ add_definitions(${PCL_DEFINITIONS})
 
 add_executable (pcl_visualizer_demo pcl_visualizer_demo.cpp)
 target_link_libraries (pcl_visualizer_demo ${PCL_LIBRARIES})
+
+add_executable (iterative_closest_point iterative_closest_point.cpp)
+target_link_libraries (iterative_closest_point ${PCL_LIBRARIES})
