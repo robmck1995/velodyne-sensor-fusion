@@ -54,11 +54,47 @@ main (int argc,
   {
     // If the user passed the number of iteration as an argument
     iterations = atoi (argv[2]);
-    if (iterations < 1)
-    {
-      PCL_ERROR ("Number of initial iterations must be >= 1\n");
-      return (-1);
-    }
+  }
+  int xy_degrees = 0;
+  int xz_degrees = 0;
+  int yz_degrees = 0;
+  if (argc > 3)
+  {
+    // If the user passed degrees to rotate in xy
+    xy_degrees = atoi (argv[3]);
+  }
+
+  if (argc > 4)
+  {
+    // If the user passed degrees to rotate in xz
+    xz_degrees = atoi (argv[4]);
+  }
+
+  if (argc > 5)
+  {
+    // If the user passed degrees to rotate in yz
+    yz_degrees = atoi (argv[5]);
+  }
+  double x_trans = 0.0;
+  double y_trans = 0.0;
+  double z_trans = 0.0;
+
+  if (argc > 6)
+  {
+    // If the user passed translation in x
+    x_trans = atof (argv[6]);
+  }
+
+  if (argc > 7)
+  {
+    // If the user passed translation in y
+    y_trans = atof (argv[7]);
+  }
+
+  if (argc > 8)
+  {
+    // If the user passed translation in z
+    z_trans = atof (argv[8]);
   }
 
   pcl::console::TicToc time;
@@ -74,21 +110,51 @@ main (int argc,
   Eigen::Matrix4d transformation_matrix = Eigen::Matrix4d::Identity ();
 
   // A rotation matrix (see https://en.wikipedia.org/wiki/Rotation_matrix)
-  double theta = M_PI / 8;  // The angle of rotation in radians
+  double theta = xy_degrees*(M_PI / 180);  // The angle of rotation in radians
   transformation_matrix (0, 0) = cos (theta);
   transformation_matrix (0, 1) = -sin (theta);
   transformation_matrix (1, 0) = sin (theta);
   transformation_matrix (1, 1) = cos (theta);
 
-  // A translation on Z axis (0.4 meters)
-  transformation_matrix (2, 3) = 0.4;
+  // A translation on Z axis
+  transformation_matrix (2, 3) = z_trans;
+
+  // Display in terminal the transformation matrix
+  std::cout << "Applying this rigid transformation to: cloud_in -> cloud_icp" << std::endl;
+  print4x4Matrix (transformation_matrix);
+  pcl::transformPointCloud (*cloud_in, *cloud_icp, transformation_matrix);
+
+  transformation_matrix = Eigen::Matrix4d::Identity ();
+  theta = xz_degrees*(M_PI / 180);  // The angle of rotation in radians
+  transformation_matrix (0, 0) = cos (theta);
+  transformation_matrix (0, 2) = -sin (theta);
+  transformation_matrix (2, 0) = sin (theta);
+  transformation_matrix (2, 2) = cos (theta);
+
+  // A translation on Y axis
+  transformation_matrix (1, 3) = y_trans;
 
   // Display in terminal the transformation matrix
   std::cout << "Applying this rigid transformation to: cloud_in -> cloud_icp" << std::endl;
   print4x4Matrix (transformation_matrix);
 
-  // Executing the transformation
-  pcl::transformPointCloud (*cloud_in, *cloud_icp, transformation_matrix);
+  pcl::transformPointCloud (*cloud_icp, *cloud_icp, transformation_matrix);
+
+  transformation_matrix = Eigen::Matrix4d::Identity ();
+  theta = yz_degrees*(M_PI / 180);  // The angle of rotation in radians
+  transformation_matrix (1, 1) = cos (theta);
+  transformation_matrix (1, 2) = -sin (theta);
+  transformation_matrix (2, 1) = sin (theta);
+  transformation_matrix (2, 2) = cos (theta);
+
+  // A translation on X axis
+  transformation_matrix (0, 3) = x_trans;
+
+  // Display in terminal the transformation matrix
+  std::cout << "Applying this rigid transformation to: cloud_in -> cloud_icp" << std::endl;
+  print4x4Matrix (transformation_matrix);
+
+  pcl::transformPointCloud (*cloud_icp, *cloud_icp, transformation_matrix);
   *cloud_tr = *cloud_icp;  // We backup cloud_icp into cloud_tr for later use
 
   // The Iterative Closest Point algorithm
@@ -97,22 +163,11 @@ main (int argc,
   icp.setMaximumIterations (iterations);
   icp.setInputSource (cloud_icp);
   icp.setInputTarget (cloud_in);
-  icp.align (*cloud_icp);
+  if(iterations > 0) {
+    icp.align (*cloud_icp);
+  }
   icp.setMaximumIterations (1);  // We set this variable to 1 for the next time we will call .align () function
   std::cout << "Applied " << iterations << " ICP iteration(s) in " << time.toc () << " ms" << std::endl;
-
-  if (icp.hasConverged ())
-  {
-    std::cout << "\nICP has converged, score is " << icp.getFitnessScore () << std::endl;
-    std::cout << "\nICP transformation " << iterations << " : cloud_icp -> cloud_in" << std::endl;
-    transformation_matrix = icp.getFinalTransformation ().cast<double>();
-    print4x4Matrix (transformation_matrix);
-  }
-  else
-  {
-    PCL_ERROR ("\nICP has not converged.\n");
-    return (-1);
-  }
 
   // Visualization
   pcl::visualization::PCLVisualizer viewer ("ICP demo");
