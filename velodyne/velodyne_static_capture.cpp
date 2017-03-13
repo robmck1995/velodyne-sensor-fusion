@@ -13,6 +13,7 @@ class SimpleHDLViewer
 {
   public:
     typedef pcl::PointCloud<pcl::PointXYZI> Cloud;
+    typedef pcl::PointCloud<pcl::PointXYZRGB> RGBCloud;
     typedef typename Cloud::ConstPtr CloudConstPtr;
 
     SimpleHDLViewer(pcl::Grabber& grabber,
@@ -46,12 +47,12 @@ class SimpleHDLViewer
 
       int cloudsAdded = 0;
       int colors[5][3] = {{255,0,0},{0,255,0},{0,0,255},{255,255,0},{255,0,255}};
+      std::vector<CloudConstPtr> cloudArr;
       while (!cloud_viewer_->wasStopped ())
       {
         CloudConstPtr cloud;
 	CloudConstPtr prevCloud;
 
-	pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloudArr [5];
         if(cloudsAdded >= 5) {
           break;
         }
@@ -66,6 +67,18 @@ class SimpleHDLViewer
         {
           handler_.setInputCloud (cloud);
           if (cloud != prevCloud) {
+            std::cout << "Gonna Copy the Cloud" << std::endl;
+            std::ostringstream id;
+            id << "HDL" << cloudsAdded;
+            //pcl::copyPointCloud(*(pcl::PointCloud<pcl::PointXYZI>::ConstPtr) cloud, *newCloud);
+            cloud_viewer_->addPointCloud (cloud, handler_, id.str());
+            std::cout << "Added Point Cloud" << std::endl;
+            cloudArr.push_back(cloud);
+	    std::cout << "Saved Cloud" << std::endl;
+          }
+
+          /*
+          if (cloud != prevCloud) {
             pcl::PointCloud<pcl::PointXYZRGB>::Ptr newCloud (new pcl::PointCloud<pcl::PointXYZRGB>);
             pcl::copyPointCloud(*(pcl::PointCloud<pcl::PointXYZI>::ConstPtr &) cloud, *newCloud);
             int r = colors[cloudsAdded][0];
@@ -79,14 +92,20 @@ class SimpleHDLViewer
             cloud_viewer_->setPointCloudRenderingProperties (pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 1, id.str());
 	    cloudsAdded++;
           }
-
+          */
+          cloudsAdded++;
+          prevCloud = cloud;
           cloud_viewer_->spinOnce ();
+        }
+
+        for(int i = 0; i < cloudArr.size(); i++) {
+          RGBCloud::ConstPtr colorCloud (new RGBCloud);
         }
 
         if (!grabber_.isRunning ())
           cloud_viewer_->spin ();
 
-	prevCloud = cloud;
+	//prevCloud = cloud;
         boost::this_thread::sleep (boost::posix_time::microseconds (100));
       }
 
