@@ -2,10 +2,12 @@
 #include <string>
 
 #include <pcl/io/ply_io.h>
+#include <pcl/io/pcd_io.h>
 #include <pcl/point_types.h>
 #include <pcl/registration/icp.h>
 #include <pcl/visualization/pcl_visualizer.h>
 #include <pcl/console/time.h>   // TicToc
+#include <pcl/console/parse.h>
 
 typedef pcl::PointXYZ PointT;
 typedef pcl::PointCloud<PointT> PointCloudT;
@@ -41,69 +43,41 @@ main (int argc,
   PointCloudT::Ptr cloud_icp (new PointCloudT);  // ICP output point cloud
 
   // Checking program arguments
-  if (argc < 2)
-  {
-    printf ("Usage :\n");
-    printf ("\t\t%s file.ply number_of_ICP_iterations\n", argv[0]);
-    PCL_ERROR ("Provide one ply file.\n");
-    return (-1);
-  }
 
-  int iterations = 1;  // Default number of ICP iterations
-  if (argc > 2)
-  {
-    // If the user passed the number of iteration as an argument
-    iterations = atoi (argv[2]);
-  }
   int xy_degrees = 0;
   int xz_degrees = 0;
   int yz_degrees = 0;
-  if (argc > 3)
-  {
-    // If the user passed degrees to rotate in xy
-    xy_degrees = atoi (argv[3]);
-  }
 
-  if (argc > 4)
-  {
-    // If the user passed degrees to rotate in xz
-    xz_degrees = atoi (argv[4]);
-  }
-
-  if (argc > 5)
-  {
-    // If the user passed degrees to rotate in yz
-    yz_degrees = atoi (argv[5]);
-  }
   double x_trans = 0.0;
   double y_trans = 0.0;
   double z_trans = 0.0;
 
-  if (argc > 6)
-  {
-    // If the user passed translation in x
-    x_trans = atof (argv[6]);
-  }
-
-  if (argc > 7)
-  {
-    // If the user passed translation in y
-    y_trans = atof (argv[7]);
-  }
-
-  if (argc > 8)
-  {
-    // If the user passed translation in z
-    z_trans = atof (argv[8]);
-  }
-
+  int iterations = 0;
   pcl::console::TicToc time;
   time.tic ();
-  if (pcl::io::loadPLYFile (argv[1], *cloud_in) < 0)
+  std::string ply_extension = ".ply";
+  std::string pcd_extension = ".pcd";
+  std::string fname;
+  pcl::console::parse_argument(argc, argv, "-file", fname);
+  pcl::console::parse_argument(argc, argv, "-x", x_trans);
+  pcl::console::parse_argument(argc, argv, "-y", y_trans);
+  pcl::console::parse_argument(argc, argv, "-z", z_trans);
+  pcl::console::parse_argument(argc, argv, "-xy_deg", xy_degrees);
+  pcl::console::parse_argument(argc, argv, "-xz_deg", xz_degrees);
+  pcl::console::parse_argument(argc, argv, "-yz_deg", yz_degrees);
+  pcl::console::parse_argument(argc, argv, "-iter", iterations);
+  if (fname.compare(fname.size() - ply_extension.size(), ply_extension.size(), ply_extension) == 0 && pcl::io::loadPLYFile (fname, *cloud_in) < 0)
   {
     PCL_ERROR ("Error loading cloud %s.\n", argv[1]);
     return (-1);
   }
+
+  if (fname.compare(fname.size() - pcd_extension.size(), pcd_extension.size(), pcd_extension) == 0 && pcl::io::loadPCDFile (argv[1], *cloud_in) < 0)
+  {
+    PCL_ERROR ("Error loading cloud %s.\n", argv[1]);
+    return (-1);
+  }
+
   std::cout << "\nLoaded file " << argv[1] << " (" << cloud_in->size () << " points) in " << time.toc () << " ms\n" << std::endl;
 
   // Defining a rotation matrix and translation vector
