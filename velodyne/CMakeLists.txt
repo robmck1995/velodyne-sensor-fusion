@@ -11,5 +11,5 @@ add_definitions(${PCL_DEFINITIONS})
 add_executable (velodyne_grabber velodyne_grabber.cpp)
 target_link_libraries (velodyne_grabber ${PCL_LIBRARIES})
 
-add_executable (velodyne_static_capture velodyne_static_capture.cpp)
+add_executable (velodyne_static_capture simple_grabber.cpp simple_grabber.h velodyne_static_capture.cpp)
 target_link_libraries (velodyne_static_capture ${PCL_LIBRARIES})

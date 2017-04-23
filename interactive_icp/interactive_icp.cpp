@@ -68,17 +68,17 @@ main (int argc,
   pcl::console::parse_argument(argc, argv, "-iter", iterations);
   if (fname.compare(fname.size() - ply_extension.size(), ply_extension.size(), ply_extension) == 0 && pcl::io::loadPLYFile (fname, *cloud_in) < 0)
   {
-    PCL_ERROR ("Error loading cloud %s.\n", argv[1]);
+    PCL_ERROR ("Error loading cloud %s.\n", fname);
     return (-1);
   }
 
-  if (fname.compare(fname.size() - pcd_extension.size(), pcd_extension.size(), pcd_extension) == 0 && pcl::io::loadPCDFile (argv[1], *cloud_in) < 0)
+  if (fname.compare(fname.size() - pcd_extension.size(), pcd_extension.size(), pcd_extension) == 0 && pcl::io::loadPCDFile (fname, *cloud_in) < 0)
   {
-    PCL_ERROR ("Error loading cloud %s.\n", argv[1]);
+    PCL_ERROR ("Error loading cloud %s.\n", fname);
     return (-1);
   }
 
-  std::cout << "\nLoaded file " << argv[1] << " (" << cloud_in->size () << " points) in " << time.toc () << " ms\n" << std::endl;
+  std::cout << "\nLoaded file " << fname << " (" << cloud_in->size () << " points) in " << time.toc () << " ms\n" << std::endl;
 
   // Defining a rotation matrix and translation vector
   Eigen::Matrix4d transformation_matrix = Eigen::Matrix4d::Identity ();

@@ -1,0 +1,28 @@
+cmake_minimum_required(VERSION 2.8 FATAL_ERROR)
+
+project(pcl-tools)
+
+find_package(PCL 1.2 REQUIRED)
+find_package(VTK REQUIRED)
+find_package(Boost COMPONENTS system REQUIRED)
+
+include_directories(${PCL_INCLUDE_DIRS} ${VTK_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS})
+link_directories(${PCL_LIBRARY_DIRS} ${VTK_LIBRARY_DIRS} ${Boost_LIBRARY_DIRS})
+add_definitions(${PCL_DEFINITIONS})
+
+add_executable (statistical_removal src/statistical_removal.cpp)
+target_link_libraries (statistical_removal ${PCL_COMMON_LIBRARIES} ${PCL_IO_LIBRARIES} ${PCL_FILTERS_LIBRARY})
+add_executable (pcd2ply src/pcd2ply.cpp)
+target_link_libraries (pcd2ply ${PCL_COMMON_LIBRARIES} ${PCL_IO_LIBRARIES})
+add_executable (pcdnormal2ply src/pcdnormal2ply.cpp)
+target_link_libraries (pcdnormal2ply ${PCL_COMMON_LIBRARIES} ${PCL_IO_LIBRARIES})
+add_executable (ply2pcd src/ply2pcd.cpp)
+target_link_libraries (ply2pcd ${PCL_COMMON_LIBRARIES} ${PCL_IO_LIBRARIES})
+add_executable (normal_estimation_omp src/normal_estimation_omp.cpp)
+target_link_libraries (normal_estimation_omp ${PCL_COMMON_LIBRARIES} ${PCL_IO_LIBRARIES} ${PCL_SEARCH_LIBRARY} ${PCL_FEATURES_LIBRARY})
+add_executable(pcd_viewer src/pcd_viewer.cpp)
+target_link_libraries(pcd_viewer ${VTK_LIBRARIES} ${Boost_LIBRARIES} ${PCL_LIBRARIES})
+IF(APPLE)
+  add_executable(PCDViewer MACOSX_BUNDLE src/pcd_viewer.cpp)
+  target_link_libraries(PCDViewer ${VTK_LIBRARIES} ${Boost_LIBRARIES} ${PCL_LIBRARIES})
+ENDIF(APPLE)

@@ -4,6 +4,7 @@
 #include <pcl/point_representation.h>
 
 #include <pcl/io/pcd_io.h>
+#include <pcl/io/ply_io.h>
 
 #include <pcl/filters/voxel_grid.h>
 #include <pcl/filters/filter.h>
@@ -124,7 +125,7 @@ void showCloudsRight(const PointCloudWithNormals::Ptr cloud_target, const PointC
   */
 void loadData (int argc, char **argv, std::vector<PCD, Eigen::aligned_allocator<PCD> > &models)
 {
-  std::string extension (".pcd");
+  std::string extension (".ply");
   // Suppose the first argument is the actual test model
   for (int i = 1; i < argc; i++)
   {
@@ -141,7 +142,7 @@ void loadData (int argc, char **argv, std::vector<PCD, Eigen::aligned_allocator<
       // Load the cloud and saves it into the global list of models
       PCD m;
       m.f_name = argv[i];
-      pcl::io::loadPCDFile (argv[i], *m.cloud);
+      pcl::io::loadPLYFile (argv[i], *m.cloud);
       //remove NAN points from the cloud
       std::vector<int> indices;
       pcl::removeNaNFromPointCloud(*m.cloud,*m.cloud, indices);
