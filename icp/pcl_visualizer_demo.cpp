@@ -21,7 +21,7 @@ printUsage (const char* progName)
             << "-------------------------------------------\n"
             << "-h           this help\n"
             << "-f           Choose custom filename of sample\n"
-            << "-d           Choose filenames of two samples\n"
+            << "-d           Choose filenames of multiple samples\n"
             << "\n\n";
 }
 
@@ -78,8 +78,7 @@ boost::shared_ptr<pcl::visualization::PCLVisualizer> doubleVis (std::vector<pcl:
 // --------------
 // -----Main-----
 // --------------
-int
-main (int argc, char** argv)
+int main (int argc, char** argv)
 {
   // --------------------------------------
   // -----Parse Command Line Arguments-----
@@ -116,10 +115,9 @@ main (int argc, char** argv)
 
   else if (pcl::console::find_argument (argc, argv, "-f") >= 0)
   {
-    std::cout << "Enter filename.\n";
-    std::string filename;
-    std::cin >> filename;
-    pcl::io::loadPCDFile (filename, *single_cloud_ptr);
+    std::string fname;
+    pcl::console::parse_argument(argc, argv, "-f", fname);
+    pcl::io::loadPCDFile (fname, *single_cloud_ptr);
     custom_s = true;
   }
   else
