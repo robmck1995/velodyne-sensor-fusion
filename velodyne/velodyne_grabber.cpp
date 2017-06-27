@@ -63,7 +63,8 @@ class SimpleHDLViewer
 
           cloud_viewer_->spinOnce ();
         }
-
+        cloud_viewer_->setPointCloudRenderingProperties (pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 3, "HDL");
+        
         if (!grabber_.isRunning ())
           cloud_viewer_->spin ();
 

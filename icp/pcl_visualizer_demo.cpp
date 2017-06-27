@@ -21,6 +21,7 @@ printUsage (const char* progName)
             << "-------------------------------------------\n"
             << "-h           this help\n"
             << "-f           Choose custom filename of sample\n"
+            << "-n           Normals visualisation example\n"
             << "-d           Choose filenames of multiple samples\n"
             << "\n\n";
 }
@@ -45,36 +46,41 @@ boost::shared_ptr<pcl::visualization::PCLVisualizer> doubleVis (std::vector<pcl:
   // --------------------------------------------
   // -----Open 3D viewer and add point cloud-----
   // --------------------------------------------
+  int colors[9][3] = {{255,0,0},{255,255,0},{0,255,0},{0,0,255},{255,0,255},{255,255,255},{255,128,0},{0,255,255},{255,0,128}};
   boost::shared_ptr<pcl::visualization::PCLVisualizer> viewer (new pcl::visualization::PCLVisualizer ("3D Viewer"));
   viewer->setBackgroundColor (0, 0, 0);
-  int r = 255;
-  int g = 0;
-  int b = 0;
   for(int i = 0; i < clouds.size(); i++) {
+    int r = colors[i%9][0];
+    int g = colors[i%9][1];
+    int b = colors[i%9][2];
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud = clouds.at(i);
     pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZRGB> rgb (cloud, r, g, b); //This will display the point cloud in red (R,G,B)
     std::ostringstream id;
     id << "cloud " << i;
     viewer->addPointCloud<pcl::PointXYZRGB> (cloud, rgb, id.str());
     viewer->setPointCloudRenderingProperties (pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 1, id.str());
-    if(r == 255) {
-      r = 0;
-      g = 255;
-    }
-    else if(g == 255) {
-      g = 0;
-      b = 255;
-    }
-    else {
-      b = 0;
-      r = 255;
-    }
   }
   viewer->addCoordinateSystem (1.0);
   viewer->initCameraParameters ();
   return (viewer);
 }
 
+boost::shared_ptr<pcl::visualization::PCLVisualizer> normalsVis (
+    pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr cloud, pcl::PointCloud<pcl::Normal>::ConstPtr normals)
+{
+  // --------------------------------------------------------
+  // -----Open 3D viewer and add point cloud and normals-----
+  // --------------------------------------------------------
+  boost::shared_ptr<pcl::visualization::PCLVisualizer> viewer (new pcl::visualization::PCLVisualizer ("3D Viewer"));
+  viewer->setBackgroundColor (0, 0, 0);
+  pcl::visualization::PointCloudColorHandlerRGBField<pcl::PointXYZRGB> rgb(cloud);
+  viewer->addPointCloud<pcl::PointXYZRGB> (cloud, rgb, "sample cloud");
+  viewer->setPointCloudRenderingProperties (pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 3, "sample cloud");
+  viewer->addPointCloudNormals<pcl::PointXYZRGB, pcl::Normal> (cloud, normals, 10, 1, "normals");
+  viewer->addCoordinateSystem (1.0);
+  viewer->initCameraParameters ();
+  return (viewer);
+}
 // --------------
 // -----Main-----
 // --------------
@@ -88,8 +94,9 @@ int main (int argc, char** argv)
     printUsage (argv[0]);
     return 0;
   }
-  bool custom_d(false), custom_s(false);
+  bool custom_d(false), custom_s(false), normals(false);
   pcl::PointCloud<pcl::PointXYZ>::Ptr single_cloud_ptr (new pcl::PointCloud<pcl::PointXYZ>);
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr normal_cloud_ptr (new pcl::PointCloud<pcl::PointXYZRGB>);
   std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> clouds;
   if (pcl::console::find_argument (argc, argv, "-d") >= 0)
   {
@@ -120,12 +127,37 @@ int main (int argc, char** argv)
     pcl::io::loadPCDFile (fname, *single_cloud_ptr);
     custom_s = true;
   }
+  else if (pcl::console::find_argument (argc, argv, "-n") >= 0)
+  {
+    normals = true;
+    std::string fname;
+    pcl::console::parse_argument(argc, argv, "-n", fname);
+    pcl::io::loadPCDFile (fname, *normal_cloud_ptr);
+    std::cout << "Normals visualisation example\n";
+  }
   else
   {
     printUsage (argv[0]);
     return 0;
   }
 
+  // ----------------------------------------------------------------
+  // -----Calculate surface normals with a search radius of 0.05-----
+  // ----------------------------------------------------------------
+  pcl::NormalEstimation<pcl::PointXYZRGB, pcl::Normal> ne;
+  ne.setInputCloud (normal_cloud_ptr);
+  pcl::search::KdTree<pcl::PointXYZRGB>::Ptr tree (new pcl::search::KdTree<pcl::PointXYZRGB> ());
+  ne.setSearchMethod (tree);
+  pcl::PointCloud<pcl::Normal>::Ptr cloud_normals1 (new pcl::PointCloud<pcl::Normal>);
+  ne.setRadiusSearch (0.05);
+  ne.compute (*cloud_normals1);
+
+  // ---------------------------------------------------------------
+  // -----Calculate surface normals with a search radius of 0.1-----
+  // ---------------------------------------------------------------
+  pcl::PointCloud<pcl::Normal>::Ptr cloud_normals2 (new pcl::PointCloud<pcl::Normal>);
+  ne.setRadiusSearch (1);
+  ne.compute (*cloud_normals2);
   boost::shared_ptr<pcl::visualization::PCLVisualizer> viewer;
   if (custom_s)
   {
@@ -134,6 +166,10 @@ int main (int argc, char** argv)
   else if (custom_d)
   {
     viewer = doubleVis(clouds);
+  }
+  else if (normals)
+  {
+    viewer = normalsVis(normal_cloud_ptr, cloud_normals2);
   }
 
   //--------------------
